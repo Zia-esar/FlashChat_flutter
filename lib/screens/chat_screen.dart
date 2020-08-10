@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 final _firestore = Firestore.instance;
 FirebaseUser loggedInUser;
+final _auth = FirebaseAuth.instance;
 
 class ChatScreen extends StatefulWidget {
   @override
@@ -12,10 +13,8 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final _auth = FirebaseAuth.instance;
   final messageTextController = TextEditingController();
 
-  
   String messageText;
 
   void getCurrentUser() async {
@@ -123,22 +122,22 @@ class MessagesStream extends StatelessWidget {
             ),
           );
         }
-        final messages = snapshot.data.documents;
+        final messages = snapshot.data.documents.reversed;
         List<MessageBubble> messageWidgets = [];
         for (var message in messages) {
           final messageText = message.data['text'];
           final messageSender = message.data['sender'];
           final currentUser = loggedInUser.email;
-          final messageWidget =
-              MessageBubble(
-                text: messageText, 
-                sender: messageSender,
-                isMe: currentUser == loggedInUser,
-                );
+          final messageWidget = MessageBubble(
+            text: messageText,
+            sender: messageSender,
+            isMe: currentUser == loggedInUser,
+          );
           messageWidgets.add(messageWidget);
         }
         return Expanded(
           child: ListView(
+            reverse: true,
             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
             children: messageWidgets,
           ),
@@ -160,14 +159,21 @@ class MessageBubble extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.all(10),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment:
+            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: <Widget>[
           Material(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(30),
-              bottomRight: Radius.circular(30),
-              bottomLeft: Radius.circular(30),
-            ),
+            borderRadius: isMe
+                ? BorderRadius.only(
+                    topLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                    bottomLeft: Radius.circular(30),
+                  )
+                : BorderRadius.only(
+                    bottomRight: Radius.circular(30),
+                    bottomLeft: Radius.circular(30),
+                    topRight: Radius.circular(30),
+                  ),
             elevation: 5,
             color: isMe ? Colors.lightBlueAccent : Colors.white,
             child: Padding(
@@ -175,7 +181,7 @@ class MessageBubble extends StatelessWidget {
               child: Text(
                 text,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: isMe ? Colors.white : Colors.black54,
                   fontSize: 16,
                 ),
               ),
